@@ -5,17 +5,15 @@ set -e
 
 # === CONFIGURATION ===
 SHARE_NAME="csv_import"
-SHARE_PATH="/srv/samba/$SHARE_NAME"
-SAMBA_USER="smbuser"
-SAMBA_PASS="smbpassword"
-GROUP_NAME="sambasharegrp"
-AZURE_ACR_NAME="youracrname"   # ACR name only (no .azurecr.io)
-DEST_DIR="$SHARE_PATH/images"
+SHARE_PATH="/home/shares/$SHARE_NAME"
+WINDOWS_GROUP_NAME="windowsgroup"
+DEST_DIR="$SHARE_PATH/"
 
 # Azure service principal credentials
-AZ_CLIENT_ID="your-client-id"
-AZ_CLIENT_SECRET="your-client-secret"
-AZ_TENANT_ID="your-tenant-id"
+AZ_CLIENT_ID="$1"
+AZ_CLIENT_SECRET="$2"
+AZ_TENANT_ID="$3"
+AZURE_ACR_NAME="$4"   # ACR name only (no .azurecr.io)
 
 # installing Sudo
 echo "=== Installing sudo ==="
@@ -24,7 +22,7 @@ if ! command -v sudo &> /dev/null; then
     su -c "apt-get install -y sudo"
 fi
 
-# installing Docker and dependencies
+# installing all the required packages
 echo "=== Installing Docker ==="
 if ! command -v docker &> /dev/null; then
     sudo apt-get update
@@ -56,24 +54,11 @@ if ! command -v smbd &> /dev/null; then
     sudo apt-get install -y libcups2 samba samba-common cups
 fi
 
-echo "=== Creating Samba Group and Folder ==="
-# Create group if needed
-if ! getent group "$GROUP_NAME" > /dev/null; then
-    sudo groupadd "$GROUP_NAME"
-fi
-
-# Create Samba user
-if ! id "$SAMBA_USER" &> /dev/null; then
-    sudo useradd -M -s /sbin/nologin "$SAMBA_USER"
-fi
-sudo usermod -aG "$GROUP_NAME" "$SAMBA_USER"
-echo -e "$SAMBA_PASS\n$SAMBA_PASS" | smbpasswd -a -s "$SAMBA_USER"
-
 # Create shared directory
+echo "=== Creating Samba Folder ==="
 sudo mkdir -p "$DEST_DIR"
-sudo chown -R root:$GROUP_NAME "$SHARE_PATH"
-sudo chmod -R 2775 "$SHARE_PATH"
-sudo find "$SHARE_PATH" -type d -exec chmod 2775 {} \;
+sudo chown -R root:users "$DEST_DIR"
+sudo chmod -R ug+rwx,o+rx-w "$DEST_DIR"
 
 # Add Samba share to config if not already present
 # execute permissions required on directory mask to cd into them
@@ -96,27 +81,18 @@ dns proxy = no
     browsable =yes
     writable = yes
     guest ok = yes
-    valid users = @$GROUP_NAME
     " | sudo tee -a /etc/samba/smb.conf > /dev/null
-    sudo systemctl restart smbd
+        sudo systemctl restart smbd
 fi
 
-# login into ACR and pulling all the latest images
+# login into the service principal then into ACR 
 echo "=== Logging in with service principal ==="
 sudo az login --service-principal \
     --username "$AZ_CLIENT_ID" \
     --password "$AZ_CLIENT_SECRET" \
     --tenant "$AZ_TENANT_ID"
 
-echo "Logging into Azure Container Registry and pulling 'latest' images..."
+echo "Logging into Azure Container Registry"
 sudo az acr login --name "$AZURE_ACR_NAME"
 
-REPOS=$(sudo az acr repository list --name "$AZURE_ACR_NAME" --output tsv)
-
-for REPO in $REPOS; do
-    FULL_IMAGE="$AZURE_ACR_NAME.azurecr.io/$REPO:latest"
-    echo "Pulling $FULL_IMAGE"
-    sudo docker pull "$FULL_IMAGE"
-done
-
-echo "Setup complete! Samba share configured and images pulled"
+echo "Setup complete! Samba shared folder configured at $SHARE_PATH and logged in ACR"
