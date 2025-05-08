@@ -27,17 +27,21 @@ echo "=== Installing Docker ==="
 if ! command -v docker &> /dev/null; then
     sudo apt-get update
     sudo apt-get install -y \
-        apt-transport-https \
         ca-certificates \
         curl \
         gnupg \
         lsb-release
 
-    curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
+    # Create keyring directory if not exists
+    sudo mkdir -p /etc/apt/keyrings
 
+    # Add Docker's official GPG key
+    curl -fsSL https://download.docker.com/linux/debian/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+
+    # Add the Docker APT repository for Debian
     echo \
-      "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu \
-      $(lsb_release -cs) stable" > /etc/apt/sources.list.d/docker.list
+      "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/debian \
+      $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
 
     sudo apt-get update
     sudo apt-get install -y docker-ce docker-ce-cli containerd.io
@@ -105,7 +109,7 @@ if ! command -v python3 &> /dev/null; then
     if [ -f /etc/debian_version ]; then
         echo "Installing Python 3 using apt..."
         sudo apt update
-        sudo apt install -y python3 python3-venv python3-pip
+        sudo apt install -y python3
     else
         echo "Unsupported OS for auto-install. Please install Python 3 manually."
         exit 1
@@ -113,9 +117,13 @@ if ! command -v python3 &> /dev/null; then
 fi
 
 echo "=== Creating virtual env and installing dependencies ==="
+
+echo "Installing python3-venv and python3-pip if they are missing..."
+sudo apt update
+sudo apt install -y python3-venv python3-pip
 # Create virtual environment if it doesn't exist
-if [ ! -d "$VENV_DIR" ]; then
-    python3 -m venv "$VENV_DIR"
+if [ ! -d ".venv" ]; then
+    python3 -m venv ".venv"
 fi
 source .venv/bin/activate
 
