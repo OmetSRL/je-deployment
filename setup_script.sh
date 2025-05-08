@@ -95,4 +95,36 @@ sudo az login --service-principal \
 echo "=== Logging into Azure Container Registry ==="
 sudo az acr login --name "$AZURE_ACR_NAME"
 
+
+echo "=== Installing Python if necessary ==="
+# Check for Python 3
+if ! command -v python3 &> /dev/null; then
+    echo "Python 3 is not installed."
+
+    # Attempt to install Python 3 (Debian/Ubuntu)
+    if [ -f /etc/debian_version ]; then
+        echo "Installing Python 3 using apt..."
+        sudo apt update
+        sudo apt install -y python3 python3-venv python3-pip
+    else
+        echo "Unsupported OS for auto-install. Please install Python 3 manually."
+        exit 1
+    fi
+fi
+
+echo "=== Creating virtual env and installing dependencies ==="
+# Create virtual environment if it doesn't exist
+if [ ! -d "$VENV_DIR" ]; then
+    python3 -m venv "$VENV_DIR"
+fi
+source .venv/bin/activate
+
+pip install --upgrade pip
+pip install -r requirements.txt
+
+# launching the script
+python dockercompose_generator.py
+
+echo "=== Python script executed ==="
+
 echo "Setup complete! Samba shared folder configured at $SHARE_PATH and logged in ACR"
