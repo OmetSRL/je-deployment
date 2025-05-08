@@ -54,24 +54,24 @@ if ! command -v smbd &> /dev/null; then
     sudo apt-get install -y libcups2 samba samba-common cups
 fi
 
-# Create shared directory
-echo "=== Creating Samba Folder ==="
+# create shared directory
+echo "=== Creating and configurating Samba Folder ==="
 sudo mkdir -p "$DEST_DIR"
 sudo chown -R root:users "$DEST_DIR"
 sudo chmod -R ug+rwx,o+rx-w "$DEST_DIR"
 
-# Add Samba share to config if not already present
+# add Samba share to config if not already present
 # execute permissions required on directory mask to cd into them
 if ! grep -q "^\[$SHARE_NAME\]" /etc/samba/smb.conf; then
     echo "Adding Samba configuration..."
     echo "
 [global]
-workgroup = $GROUP_NAME
-server string = Samba Server %v
-netbios name = debian
-security = user
-map to guest = bad user
-dns proxy = no
+    workgroup = $GROUP_NAME
+    server string = Samba Server %v
+    netbios name = debian
+    security = user
+    map to guest = bad user
+    dns proxy = no
 
 [$SHARE_NAME]
     path = $SHARE_PATH
@@ -92,7 +92,7 @@ sudo az login --service-principal \
     --password "$AZ_CLIENT_SECRET" \
     --tenant "$AZ_TENANT_ID"
 
-echo "Logging into Azure Container Registry"
+echo "=== Logging into Azure Container Registry ==="
 sudo az acr login --name "$AZURE_ACR_NAME"
 
 echo "Setup complete! Samba shared folder configured at $SHARE_PATH and logged in ACR"
