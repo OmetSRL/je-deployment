@@ -164,7 +164,7 @@ pip install --upgrade pip
 pip install -r requirements.txt
 
 # launching the script
-python dockercompose_generator.py
+python dockercompose_generator.py $DOCKER_USERNAME
 
 echo "=== Python script executed ==="
 # i move outside the folder again
