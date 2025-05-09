@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# Usage: ./je-deployment/setup_script.sh <dockerhub-username> <dockerhub-password>
+
+
 # Exit on error
 set -e
 
@@ -9,60 +12,61 @@ SHARE_PATH="/home/shares/$SHARE_NAME"
 WINDOWS_GROUP_NAME="windowsgroup"
 DEST_DIR="$SHARE_PATH/"
 
-# Azure service principal credentials
-AZ_CLIENT_ID="$1"
-AZ_CLIENT_SECRET="$2"
-AZ_TENANT_ID="$3"
-AZURE_ACR_NAME="$4"   # ACR name only (no .azurecr.io)
+# # Azure service principal credentials
+# AZ_CLIENT_ID="$1"
+# AZ_CLIENT_SECRET="$2"
+# AZ_TENANT_ID="$3"
+# AZURE_ACR_NAME="$4"   # ACR name only (no .azurecr.io)
 
-# installing Sudo
-echo "=== Installing sudo ==="
-if ! command -v sudo &> /dev/null; then
-    apt-get update
-    su -c "apt-get install -y sudo"
+# removed because it's necessary before i can clone this repo
+# # installing Sudo
+# echo "=== Installing sudo ==="
+# if ! command -v &> /dev/null; then
+#     apt-get update
+#     su -c "apt-get install -y sudo"
+# fi
+
+if [ "$(id -u)" -ne 0 ]; then
+    echo "This script must be run as root." >&2
+    exit 1
 fi
 
 # installing all the required packages
 echo "=== Installing Docker ==="
 if ! command -v docker &> /dev/null; then
-    sudo apt-get update
-    sudo apt-get install -y \
+    apt-get update
+    apt-get install -y \
         ca-certificates \
         curl \
         gnupg \
         lsb-release
 
     # Create keyring directory if not exists
-    sudo mkdir -p /etc/apt/keyrings
+    mkdir -p /etc/apt/keyrings
 
     # Add Docker's official GPG key
-    curl -fsSL https://download.docker.com/linux/debian/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+    curl -fsSL https://download.docker.com/linux/debian/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg
 
     # Add the Docker APT repository for Debian
     echo \
       "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/debian \
-      $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+      $(lsb_release -cs) stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null
 
-    sudo apt-get update
-    sudo apt-get install -y docker-ce docker-ce-cli containerd.io
-fi
-
-echo "=== Installing Azure CLI ==="
-if ! command -v az &> /dev/null; then
-    sudo curl -sL https://aka.ms/InstallAzureCLIDeb | bash
+    apt-get update
+    apt-get install -y docker-ce docker-ce-cli containerd.io
 fi
 
 echo "=== Installing Samba ==="
 if ! command -v smbd &> /dev/null; then
-    sudo apt-get update
-    sudo apt-get install -y libcups2 samba samba-common cups
+    apt-get update
+    apt-get install -y libcups2 samba samba-common cups
 fi
 
 # create shared directory
 echo "=== Creating and configurating Samba Folder ==="
-sudo mkdir -p "$DEST_DIR"
-sudo chown -R root:users "$DEST_DIR"
-sudo chmod -R ug+rwx,o+rx-w "$DEST_DIR"
+mkdir -p "$DEST_DIR"
+chown -R root:users "$DEST_DIR"
+chmod -R ug+rwx,o+rx-w "$DEST_DIR"
 
 # add Samba share to config if not already present
 # execute permissions required on directory mask to cd into them
@@ -85,19 +89,44 @@ if ! grep -q "^\[$SHARE_NAME\]" /etc/samba/smb.conf; then
     browsable =yes
     writable = yes
     guest ok = yes
-    " | sudo tee -a /etc/samba/smb.conf > /dev/null
-        sudo systemctl restart smbd
+    " | tee -a /etc/samba/smb.conf > /dev/null
+        systemctl restart smbd
 fi
 
-# login into the service principal then into ACR 
-echo "=== Logging in with service principal ==="
-sudo az login --service-principal \
-    --username "$AZ_CLIENT_ID" \
-    --password "$AZ_CLIENT_SECRET" \
-    --tenant "$AZ_TENANT_ID"
 
-echo "=== Logging into Azure Container Registry ==="
-sudo az acr login --name "$AZURE_ACR_NAME"
+echo "=== Logging into Docker Hub ==="
+if [ "$#" -ne 2 ]; then
+  echo "Usage: $0 <username> <password>"
+  exit 1
+fi
+
+DOCKER_USERNAME="$1"
+DOCKER_PASSWORD="$2"
+
+echo "$DOCKER_PASSWORD" | docker login --username "$DOCKER_USERNAME" --password-stdin
+
+if [ $? -eq 0 ]; then
+  echo "Docker login successful"
+else
+  echo "Docker login failed" >&2
+  exit 1
+fi
+
+
+# echo "=== Installing Azure CLI ==="
+# if ! command -v az &> /dev/null; then
+#     curl -sL https://aka.ms/InstallAzureCLIDeb | bash
+# fi
+
+# # login into the service principal then into ACR 
+# echo "=== Logging in with service principal ==="
+# az login --service-principal \
+#     --username "$AZ_CLIENT_ID" \
+#     --password "$AZ_CLIENT_SECRET" \
+#     --tenant "$AZ_TENANT_ID"
+
+# echo "=== Logging into Azure Container Registry ==="
+# az acr login --name "$AZURE_ACR_NAME"
 
 
 echo "=== Installing Python if necessary ==="
@@ -108,8 +137,8 @@ if ! command -v python3 &> /dev/null; then
     # Attempt to install Python 3 (Debian/Ubuntu)
     if [ -f /etc/debian_version ]; then
         echo "Installing Python 3 using apt..."
-        sudo apt update
-        sudo apt install -y python3
+        apt update
+        apt install -y python3
     else
         echo "Unsupported OS for auto-install. Please install Python 3 manually."
         exit 1
@@ -118,9 +147,13 @@ fi
 
 echo "=== Creating virtual env and installing dependencies ==="
 
-echo "Installing python3-venv and python3-pip if they are missing..."
-sudo apt update
-sudo apt install -y python3-venv python3-pip
+echo "Installing python3-venv and python3-pip if they are missing"
+
+apt update
+apt install -y python3-venv python3-pip
+
+# i move inside the folder
+cd js-deployment
 # Create virtual environment if it doesn't exist
 if [ ! -d ".venv" ]; then
     python3 -m venv ".venv"
@@ -134,5 +167,7 @@ pip install -r requirements.txt
 python dockercompose_generator.py
 
 echo "=== Python script executed ==="
+# i move outside the folder again
+cd ..
 
 echo "Setup complete! Samba shared folder configured at $SHARE_PATH and logged in ACR"
