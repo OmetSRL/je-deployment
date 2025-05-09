@@ -153,7 +153,7 @@ apt update
 apt install -y python3-venv python3-pip
 
 # i move inside the folder
-cd js-deployment
+cd je-deployment
 # Create virtual environment if it doesn't exist
 if [ ! -d ".venv" ]; then
     python3 -m venv ".venv"
