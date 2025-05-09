@@ -1,6 +1,14 @@
 import os
 import re
 import yaml
+import sys
+
+if len(sys.argv) < 2:
+    print("Error: Missing required parameter.", file=sys.stderr)
+    sys.exit(1)
+else:
+    docker_hub_account = sys.argv[1]
+
 
 # --- Custom scalar string for folded formatting ---
 class FoldedScalarString(str):
@@ -58,7 +66,7 @@ services['mongodb'] = {
 
 services['orchestrator'] = {
     'container_name': 'orchestrator',
-    'image': 'url_where_to_find/orchestrator',
+    'image': f'{docker_hub_account}/orchestrator',
     'volumes': [
         f"{input_folder}/config-orchestrator-1.json:/app/config/config.json"
     ],
@@ -95,7 +103,7 @@ for filename in os.listdir(input_folder):
         # Add the service with the config file mounted
         services[service_name] = {
             'container_name': service_name,
-            'image': 'url_where_to_find/'+image,
+            'image': f'{docker_hub_account}/'+image,
             'volumes': [
                 f"{input_folder}/{filename}:/app/config.json"
             ],

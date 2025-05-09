@@ -153,7 +153,7 @@ apt update
 apt install -y python3-venv python3-pip
 
 # i move inside the folder
-cd js-deployment
+cd je-deployment
 # Create virtual environment if it doesn't exist
 if [ ! -d ".venv" ]; then
     python3 -m venv ".venv"
@@ -164,7 +164,7 @@ pip install --upgrade pip
 pip install -r requirements.txt
 
 # launching the script
-python dockercompose_generator.py
+python dockercompose_generator.py $DOCKER_USERNAME
 
 echo "=== Python script executed ==="
 # i move outside the folder again
