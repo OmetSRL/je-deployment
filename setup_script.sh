@@ -12,20 +12,6 @@ SHARE_PATH="/home/shares/$SHARE_NAME"
 WINDOWS_GROUP_NAME="windowsgroup"
 DEST_DIR="$SHARE_PATH/"
 
-# # Azure service principal credentials
-# AZ_CLIENT_ID="$1"
-# AZ_CLIENT_SECRET="$2"
-# AZ_TENANT_ID="$3"
-# AZURE_ACR_NAME="$4"   # ACR name only (no .azurecr.io)
-
-# removed because it's necessary before i can clone this repo
-# # installing Sudo
-# echo "=== Installing sudo ==="
-# if ! command -v &> /dev/null; then
-#     apt-get update
-#     su -c "apt-get install -y sudo"
-# fi
-
 if [ "$(id -u)" -ne 0 ]; then
     echo "This script must be run as root." >&2
     exit 1
@@ -112,23 +98,6 @@ else
   exit 1
 fi
 
-
-# echo "=== Installing Azure CLI ==="
-# if ! command -v az &> /dev/null; then
-#     curl -sL https://aka.ms/InstallAzureCLIDeb | bash
-# fi
-
-# # login into the service principal then into ACR 
-# echo "=== Logging in with service principal ==="
-# az login --service-principal \
-#     --username "$AZ_CLIENT_ID" \
-#     --password "$AZ_CLIENT_SECRET" \
-#     --tenant "$AZ_TENANT_ID"
-
-# echo "=== Logging into Azure Container Registry ==="
-# az acr login --name "$AZURE_ACR_NAME"
-
-
 echo "=== Installing Python if necessary ==="
 # Check for Python 3
 if ! command -v python3 &> /dev/null; then
@@ -170,4 +139,4 @@ echo "=== Python script executed ==="
 # i move outside the folder again
 cd ..
 
-echo "Setup complete! Samba shared folder configured at $SHARE_PATH and logged in ACR"
+echo "Setup complete! Samba shared folder configured at $SHARE_PATH, created Docker compose file and logged in Docker Hub"
