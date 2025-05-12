@@ -49,9 +49,9 @@ pattern = re.compile(r'^config-([\w\d\-]+)-\d+\.json$')
 services = {}
 
 # Adding custom ones
-services['mongodb'] = {
-    'image': 'mongodb/mongodb-community-server:7.0.9-ubuntu2204',
-    'container_name': 'mongodb',
+services['mongo_db'] = {
+    'image': 'mongo:4.4',
+    'container_name': 'mongo_db',
     'healthcheck': {
       'test': ["CMD", "mongosh", "--eval", "\'db.runCommand(\\\"ping\\\").ok\'", "--quiet"],
       'interval': '10s',
@@ -67,9 +67,9 @@ services['mongodb'] = {
 services['orchestrator'] = {
     'container_name': 'orchestrator',
     'image': f'{docker_hub_account}/orchestrator',
-    'volumes': [
-        f"{input_folder}/config-orchestrator-1.json:/app/config/config.json"
-    ],
+    # 'volumes': [
+    #     f"{input_folder}/config-orchestrator-1.json:/app/config/config.json"
+    # ],
     'healthcheck': {
         'test': clean_folded_string(
             "curl -fsSL http://localhost:3000/api/health &&\n"
@@ -80,6 +80,8 @@ services['orchestrator'] = {
         'retries': 3,
         'start_period': '20s'
     },
+    'volumes': ['/home/shares/csv_import/:/home/shares/csv_import'],
+    'ports': ['3000:3000', '4000:4000'],
     'restart': 'unless-stopped',
     'networks': ['recepy-manager']
 }
@@ -105,7 +107,7 @@ for filename in os.listdir(input_folder):
             'container_name': service_name,
             'image': f'{docker_hub_account}/'+image,
             'volumes': [
-                f"{input_folder}/{filename}:/app/config.json"
+                f"./configs/{filename}:/app/config.json"
             ],
             'healthcheck': {
                 'test': clean_folded_string(
