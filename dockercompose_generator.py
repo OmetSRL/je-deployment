@@ -80,7 +80,8 @@ services['orchestrator'] = {
         'retries': 3,
         'start_period': '20s'
     },
-    'volumes': ['/home/shares/csv_import/:/home/shares/csv_import'],
+    'volumes': ['/home/shares/csv_import/:/home/shares/csv_import', 
+                './configs/config-orchestrator-1.json:/app/config/config.json'],
     'ports': ['3000:3000', '4000:4000'],
     'restart': 'unless-stopped',
     'networks': ['recepy-manager']
