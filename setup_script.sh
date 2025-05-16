@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Usage: ./je-deployment/setup_script.sh <dockerhub-username> <dockerhub-password>
+# Usage: ./je-deployment/setup_script.sh <dockerhub-username> <dockerhub-password> <shared_folder_name>
 
 
 # Exit on error
@@ -82,7 +82,7 @@ fi
 
 echo "=== Logging into Docker Hub ==="
 if [ "$#" -ne 3 ]; then
-  echo "Usage: $0 <username> <password>"
+  echo "Usage: $0 <username> <password> <shared_folder>"
   exit 1
 fi
 
