@@ -1,13 +1,13 @@
 #!/bin/bash
 
-# Usage: ./je-deployment/setup_script.sh <dockerhub-username> <dockerhub-password>
+# Usage: ./je-deployment/setup_script.sh <dockerhub-username> <dockerhub-password> <shared_folder_name>
 
 
 # Exit on error
 set -e
 
 # === CONFIGURATION ===
-SHARE_NAME="csv_import"
+SHARE_NAME="$3"
 SHARE_PATH="/home/shares/$SHARE_NAME"
 WINDOWS_GROUP_NAME="windowsgroup"
 DEST_DIR="$SHARE_PATH/"
@@ -81,8 +81,8 @@ fi
 
 
 echo "=== Logging into Docker Hub ==="
-if [ "$#" -ne 2 ]; then
-  echo "Usage: $0 <username> <password>"
+if [ "$#" -ne 3 ]; then
+  echo "Usage: $0 <username> <password> <shared_folder>"
   exit 1
 fi
 
