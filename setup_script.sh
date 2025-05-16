@@ -7,7 +7,7 @@
 set -e
 
 # === CONFIGURATION ===
-SHARE_NAME="csv_import"
+SHARE_NAME="$3"
 SHARE_PATH="/home/shares/$SHARE_NAME"
 WINDOWS_GROUP_NAME="windowsgroup"
 DEST_DIR="$SHARE_PATH/"
