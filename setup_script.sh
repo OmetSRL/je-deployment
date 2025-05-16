@@ -17,6 +17,11 @@ if [ "$(id -u)" -ne 0 ]; then
     exit 1
 fi
 
+if [ "$#" -ne 3 ]; then
+  echo "Usage: $0 <username> <password> <shared_folder>"
+  exit 1
+fi
+
 # installing all the required packages
 echo "=== Installing Docker ==="
 if ! command -v docker &> /dev/null; then
@@ -81,10 +86,6 @@ fi
 
 
 echo "=== Logging into Docker Hub ==="
-if [ "$#" -ne 3 ]; then
-  echo "Usage: $0 <username> <password> <shared_folder>"
-  exit 1
-fi
 
 DOCKER_USERNAME="$1"
 DOCKER_PASSWORD="$2"
