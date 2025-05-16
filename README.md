@@ -2,8 +2,8 @@
 
 This script is used to prepare the enviroment for the installation of the Job Executor apllication.\
 It installs all the required packages, sets up a shared folder and logs in Docker Hub\
-You need to pass the Docker Hub username and password like:\
-./setup_script.sh <username_dockerhub> <password_dockerhub>
+You need to pass the Docker Hub username, the password, and the name of the shared folder you want to create like:\
+./setup_script.sh <username_dockerhub> <password_dockerhub> <share_folder_name>
 \
 This also includes a Python script that is launched when the sh script is launched that automatically generates a Docker compose file.\
 It needs a folder "configs" in the same folder where this repo is cloned (not inside the repo).
