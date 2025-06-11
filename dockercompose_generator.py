@@ -60,7 +60,7 @@ services['mongo_db'] = {
       'start_period': '20s'
     },
     'volumes': ['mongodb_data:/data/db'],
-    'restart': 'unless-stopped',
+    'restart': 'always',
     'networks': ['recepy-manager']
 }
 
@@ -83,7 +83,7 @@ services['orchestrator'] = {
     'volumes': ['/home/shares/csv_import/:/home/shares/csv_import', 
                 './configs/config-orchestrator-1.json:/app/config/config.json'],
     'ports': ['3000:3000', '4000:4000'],
-    'restart': 'unless-stopped',
+    'restart': 'always',
     'networks': ['recepy-manager']
 }
 
@@ -119,7 +119,7 @@ for filename in os.listdir(input_folder):
                 'retries': 3,
                 'start_period': '20s'
             },
-            'restart': 'unless-stopped',
+            'restart': 'always',
             'networks': ['recepy-manager']
         }
 
